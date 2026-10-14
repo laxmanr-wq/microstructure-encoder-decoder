@@ -1,5 +1,7 @@
 # Microstructure Encoder / Decoder
 
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/deploy?repository=laxmanr-wq/microstructure-encoder-decoder&branch=main&mainModule=streamlit_app.py)
+
 Upload a micrograph → encode to a compact latent → decode → faithful reconstruction.
 **Fidelity is the deliverable, not generation.**
 
