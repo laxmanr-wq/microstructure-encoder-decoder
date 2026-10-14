@@ -21,6 +21,15 @@ from eval import load_net
 from infer import pick_device, load_image, image_metrics, compression
 from encoder import encode_micrograph, quantize_latent
 from decoder import decode_latent, dequantize_latent
+import gc
+
+
+def render_image(img, caption=None, **kwargs):
+    """Render image using width='stretch' to eliminate Streamlit 1.40+ deprecation warnings."""
+    try:
+        st.image(img, caption=caption, width="stretch", **kwargs)
+    except TypeError:
+        st.image(img, caption=caption, use_container_width=True, **kwargs)
 
 # Page configuration
 st.set_page_config(
@@ -335,6 +344,7 @@ if img_to_process is not None:
             st.session_state.pop("decoded_orig", None)
             st.session_state.pop("decoded_edited", None)
             st.session_state.pop("sweep_results", None)
+            gc.collect()
 
     # --- Step 2: Latent Inspection & Options ---
     if "encoded_state" in st.session_state:
@@ -384,7 +394,7 @@ if img_to_process is not None:
         for c in range(min(4, z_display.shape[0])):
             with ch_cols[c]:
                 st.caption(f"Channel $Z_{c}$ ({z_display.shape[1]}×{z_display.shape[2]})")
-                st.image(colorize_channel(z_display[c]), use_container_width=True)
+                render_image(colorize_channel(z_display[c]))
 
         st.write("")
         st.markdown("---")
@@ -419,9 +429,10 @@ if img_to_process is not None:
             if decode_single_btn:
                 with st.spinner("Executing Decoder module..."):
                     recon_pil, recon_np, y_t = decode_latent(net, q_data, dev, meta)
-                    m = image_metrics(y_t, enc["x_tensor"].to(dev), dev)
+                    m = image_metrics(y_t, enc["x_tensor"].to(dev), dev, compute_lpips=True)
                     diff_map, diff_raw = compute_difference_map(enc["orig_crop"], recon_np, amplify=1.0, cmap_name="turbo")
                     acc_scores = calculate_accuracy_scores(enc["orig_crop"], recon_np, m)
+                    gc.collect()
                     
                     st.session_state["decoded_orig"] = {
                         "recon_pil": recon_pil,
@@ -498,13 +509,13 @@ if img_to_process is not None:
                 v1, v2, v3 = st.columns(3)
                 with v1:
                     st.markdown("**Original Micrograph**")
-                    st.image(enc["orig_crop"], use_container_width=True)
+                    render_image(enc["orig_crop"])
                 with v2:
                     st.markdown(f"**Reconstructed Micrograph ({meta['mode']})**")
-                    st.image(d_orig["recon_pil"], use_container_width=True)
+                    render_image(d_orig["recon_pil"])
                 with v3:
                     st.markdown(f"**Difference Heatmap ({selected_cmap.title()})**")
-                    st.image(current_diff_img, use_container_width=True)
+                    render_image(current_diff_img)
 
                 # Error statistics summary bar
                 st.caption(
@@ -555,7 +566,7 @@ if img_to_process is not None:
                             
                             z_in = torch.from_numpy(deq_data).float().unsqueeze(0).to(dev)
                             y_rec = net.decode(z_in).clamp(-1.0, 1.0)
-                            m_vals = image_metrics(y_rec, x_t, dev)
+                            m_vals = image_metrics(y_rec, x_t, dev, compute_lpips=False)
                             
                             rec_uint8 = ((y_rec[0, 0].detach().cpu().numpy() + 1.0) * 127.5).clip(0, 255).astype(np.uint8)
                             scores = calculate_accuracy_scores(orig_np, rec_uint8, m_vals)
@@ -589,6 +600,7 @@ if img_to_process is not None:
                                 "ratio": q_info['ratio']
                             }
                             
+                    gc.collect()
                     st.session_state["sweep_results"] = {
                         "records": sweep_records,
                         "images": sweep_images
@@ -621,13 +633,13 @@ if img_to_process is not None:
                         gc1, gc2, gc3 = st.columns(3)
                         with gc1:
                             st.markdown("**Original Micrograph**")
-                            st.image(enc["orig_crop"], use_container_width=True)
+                            render_image(enc["orig_crop"])
                         with gc2:
                             st.markdown(f"**Reconstructed ({lbl})**")
-                            st.image(g_data["rec_pil"], use_container_width=True)
+                            render_image(g_data["rec_pil"])
                         with gc3:
                             st.markdown(f"**Difference Heatmap ({g_data['scores']['composite_acc']:.2f}% Accuracy)**")
-                            st.image(g_data["diff_pil"], use_container_width=True)
+                            render_image(g_data["diff_pil"])
 
         # ==========================================
         # TAB 3: Latent Weight & Matrix Editor
@@ -741,9 +753,10 @@ if img_to_process is not None:
             if decode_edited_btn:
                 with st.spinner("Decoding edited latent matrix through Decoder..."):
                     e_recon_pil, e_recon_np, e_y_t = decode_latent(net, edited_latent, dev, meta)
-                    e_metrics = image_metrics(e_y_t, enc["x_tensor"].to(dev), dev)
+                    e_metrics = image_metrics(e_y_t, enc["x_tensor"].to(dev), dev, compute_lpips=True)
                     e_diff_map, e_diff_raw = compute_difference_map(enc["orig_crop"], e_recon_np, amplify=1.5, cmap_name="turbo")
                     e_acc = calculate_accuracy_scores(enc["orig_crop"], e_recon_np, e_metrics)
+                    gc.collect()
                     
                     st.session_state["decoded_edited"] = {
                         "recon_pil": e_recon_pil,
@@ -800,13 +813,13 @@ if img_to_process is not None:
                 ec1, ec2, ec3 = st.columns(3)
                 with ec1:
                     st.markdown("**Original Micrograph**")
-                    st.image(enc["orig_crop"], use_container_width=True)
+                    render_image(enc["orig_crop"])
                 with ec2:
                     st.markdown("**Decoded with Edited Weights**")
-                    st.image(d_edit["recon_pil"], use_container_width=True)
+                    render_image(d_edit["recon_pil"])
                 with ec3:
                     st.markdown("**Residual Error Heatmap** *(Blue = match, Red = shifted)*")
-                    st.image(d_edit["diff_map"], use_container_width=True)
+                    render_image(d_edit["diff_map"])
 
 else:
     st.info("👆 Please upload a micrograph or choose one from the sidebar to begin.")

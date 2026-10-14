@@ -12,12 +12,15 @@ _LPIPS = None
 def get_lpips(device):
     global _LPIPS
     if _LPIPS is None:
-        import lpips as _l
-        net = _l.LPIPS(net="alex", verbose=False)
-        net.eval()
-        for p in net.parameters():
-            p.requires_grad_(False)
-        _LPIPS = net
+        import warnings
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=UserWarning, module="torchvision")
+            import lpips as _l
+            net = _l.LPIPS(net="alex", verbose=False)
+            net.eval()
+            for p in net.parameters():
+                p.requires_grad_(False)
+            _LPIPS = net
     return _LPIPS.to(device)
 
 
