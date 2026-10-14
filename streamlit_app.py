@@ -29,7 +29,7 @@ def render_image(img, caption=None, **kwargs):
     try:
         st.image(img, caption=caption, width="stretch", **kwargs)
     except TypeError:
-        st.image(img, caption=caption, use_container_width=True, **kwargs)
+        st.image(img, caption=caption, **kwargs)
 
 # Page configuration
 st.set_page_config(
@@ -159,10 +159,19 @@ def get_model(ckpt_path, device):
     return net, cfg, step
 
 
-def prepare_image(img, multiple=8):
-    """Crop grayscale micrograph to multiple of 8 and normalize to [-1, 1]."""
+def prepare_image(img, multiple=8, max_dim=None):
+    """Crop grayscale micrograph to multiple of 8 and normalize to [-1, 1].
+    When running on CPU (Streamlit Cloud 1.0 GB RAM limit), crops to a 256x256 ROI
+    to preserve 100% native metallurgical resolution while staying strictly under the 1GB RAM ceiling.
+    """
     a = np.asarray(img.convert("L"), dtype=np.uint8)
     H, W = a.shape
+    if max_dim is not None and (H > max_dim or W > max_dim):
+        y0 = max(0, (H - max_dim) // 2)
+        x0 = max(0, (W - max_dim) // 2)
+        a = a[y0:y0 + max_dim, x0:x0 + max_dim]
+        H, W = a.shape
+
     Hc, Wc = (H // multiple) * multiple, (W // multiple) * multiple
     y, x = (H - Hc) // 2, (W - Wc) // 2
     a = a[y:y + Hc, x:x + Wc].copy()
@@ -269,6 +278,24 @@ if os.path.isdir(sample_dir):
 
 selected_sample = st.sidebar.selectbox("Select Test Image", ["None (Upload custom)"] + sample_files)
 
+# Resolution Field of View selector (Critical for Streamlit Cloud 1GB container ceiling)
+st.sidebar.markdown("### 📐 Micrograph Resolution (ROI)")
+if dev == "cpu":
+    roi_choice = st.sidebar.selectbox(
+        "Field of View",
+        ["256 × 256 (Cloud Safe — Recommended)", "384 × 384 (Extended)", "Full Micrograph (Native)"],
+        index=0,
+        help="256x256 native center-crop preserves 100% metallurgical grain/phase detail while staying strictly within the 1.0 GB container RAM ceiling."
+    )
+    if "256" in roi_choice:
+        active_max_dim = 256
+    elif "384" in roi_choice:
+        active_max_dim = 384
+    else:
+        active_max_dim = None
+else:
+    active_max_dim = None
+
 # Outputs Directory
 out_dir = os.path.join(ROOT, "outputs")
 os.makedirs(out_dir, exist_ok=True)
@@ -315,11 +342,11 @@ if img_to_process is not None:
     with col_info:
         st.info(f"Loaded: **{source_name}** ({img_to_process.width} × {img_to_process.height} px, 8-bit)")
     with col_btn:
-        encode_btn = st.button("⚡ 1. Encode Image Only", type="primary", use_container_width=True)
+        encode_btn = st.button("⚡ 1. Encode Image Only", type="primary", width="stretch")
 
     if encode_btn:
         with st.spinner(f"Encoding micrograph in {mode_code} mode..."):
-            x_tensor, a_crop = prepare_image(img_to_process)
+            x_tensor, a_crop = prepare_image(img_to_process, max_dim=active_max_dim)
             z_tensor, q_dict, meta = encode_micrograph(net, x_tensor, dev, mode=mode_code)
             
             # Save latent and metadata to outputs
@@ -612,7 +639,7 @@ if img_to_process is not None:
                 
                 st.markdown("### 📋 Multi-Ratio Benchmark Comparison Table")
                 display_cols = ["Tier", "Ratio", "Size (KB)", "Storage Saved", "Overall Accuracy", "Pixel Accuracy", "Structural SSIM", "PSNR (dB)", "Production Verdict"]
-                st.dataframe(df_sweep[display_cols], use_container_width=True)
+                st.dataframe(df_sweep[display_cols], width="stretch")
 
                 st.write("")
                 st.markdown("### 📈 Accuracy vs. Compression Trade-off Curve")
@@ -716,7 +743,7 @@ if img_to_process is not None:
                 view_ch = st.selectbox("Select Channel to inspect", [0, 1, 2, 3])
                 st.markdown(f"**Channel $Z_{view_ch}$ Submatrix (first 12×12 elements):**")
                 sub_df = pd.DataFrame(edited_latent[view_ch, :12, :12])
-                st.dataframe(sub_df, use_container_width=True)
+                st.dataframe(sub_df, width="stretch")
                 st.caption(f"Channel {view_ch} Stats — Min: {edited_latent[view_ch].min():.3f}, Max: {edited_latent[view_ch].max():.3f}, Mean: {edited_latent[view_ch].mean():.3f}, Std: {edited_latent[view_ch].std():.3f}")
 
             with edit_tab4:
@@ -736,7 +763,7 @@ if img_to_process is not None:
             st.write("")
             col_dec_btn, col_save_btn = st.columns([1, 1])
             with col_dec_btn:
-                decode_edited_btn = st.button("🔬 Decode with Edited Weights", type="primary", use_container_width=True)
+                decode_edited_btn = st.button("🔬 Decode with Edited Weights", type="primary", width="stretch")
             with col_save_btn:
                 edited_npy_bytes = tempfile.NamedTemporaryFile(suffix=".npy", delete=False)
                 np.save(edited_npy_bytes.name, edited_latent.astype(np.float16))
@@ -747,7 +774,7 @@ if img_to_process is not None:
                     data=ef_bytes,
                     file_name=f"{source_name}_edited_latent.npy",
                     mime="application/octet-stream",
-                    use_container_width=True
+                    width="stretch"
                 )
 
             if decode_edited_btn:
