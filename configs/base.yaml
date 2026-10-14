@@ -1,0 +1,46 @@
+# Phase 4/5 training config. Numbers marked (phase0) come from reports/phase0_env.json.
+seed: 1337
+device: mps                 # mps -> cpu fallback handled in train.py
+dtype: fp32                 # BRIEF: fp32 only, MPS autocast is unreliable
+
+data:
+  manifest: /Volumes/Hard Disk/Microstructure Encoder Decoder/manifests/manifest.csv
+  patch: 128
+  num_workers: 0            # spawn workers each re-import torch (~400MB); model needs ~10 patch/s, nw=0 gives 275
+  val_batches: 24           # val patches = val_batches * batch
+
+model:
+  chans: [32, 64, 128]      # f=8, 3 downsample stages
+  z_channels: 4             # KL 4-channel default
+  n_res: 2
+  attn: true                # dropped automatically if it costs >15% step time (phase4)
+  latent: kl                # kl | vq
+  kl_weight: 1.0e-6
+  out_act: "none"           # unbounded output, clamped at inference (tanh saturates)
+  logvar_init: 0.0          # phase 3: 0.0 beat -6.0 (23.6 vs 21.9 dB at 200 steps)
+  vq_n: 512
+  vq_dim: 64
+
+loss:
+  w_l1: 1.0
+  w_lpips: 1.0              # AlexNet
+  w_msssim: 0.25
+  gan: false                # Phase 8 only
+
+optim:
+  lr: 2.0e-4
+  betas: [0.9, 0.95]
+  weight_decay: 0.01
+  grad_clip: 1.0
+  warmup_steps: 200
+  min_lr_frac: 0.05         # cosine floor
+  ema_decay: 0.999
+
+train:
+  batch_size: 8             # phase0 chose 16 on the probe model; see reports/phase4_memory_diag.json
+  batch_note: "16 thrashes here (0.008 it/s, +2.8 GB swap); 8 runs 1.16 it/s at 2.2 GB peak. BRIEF: cut batch, never correctness"
+  steps: 2000               # phase 4 calibration; phase 5 overrides via --steps
+  log_every: 50             # wall-clock it/s -> thermal throttling visible
+  val_every: 500
+  ckpt_every: 2000          # keep ONLY best + last (disk is tight)
+  out_dir: /Volumes/Hard Disk/Microstructure Encoder Decoder/checkpoints

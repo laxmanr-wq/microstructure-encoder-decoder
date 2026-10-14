@@ -1,0 +1,41 @@
+# Python Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Operating System & IDE
+.DS_Store
+._*
+.idea/
+.vscode/
+*.swp
+*~
+
+# Full Raw Dataset (2.0 GB - excluded, demo_micrographs provides deploy samples)
+dataset/
+
+# Training checkpoints (exclude 58 MB raw training checkpoints, keep 29 MB deployment full_best.pt)
+checkpoints/calib_*.pt
+checkpoints/full_last.pt
+checkpoints/full_best_training.pt
+
+# Temporary & intermediate artifacts
+outputs/*.npy
+outputs/*.png
+outputs/*.json
+!outputs/difference_heatmap_comparison.png
+
+# Large reports data
+reports/*.log
+reports/*.npz
+
+# Temp storage
+.tempmediaStorage/
+scratch/

@@ -1,0 +1,33 @@
+{
+  "phase": 2,
+  "manifest": "/Volumes/Hard Disk/Microstructure Encoder Decoder/manifests/manifest.csv",
+  "data_root_used": "/Users/nareshramavath/ms_cache/dataset",
+  "patch": 128,
+  "batch_size": 16,
+  "augmentation": "8-fold dihedral (rot90 + flip)",
+  "normalisation": "[-1,1], 1xHxW float32",
+  "counts_keep_filtered": {
+    "train": 6387,
+    "val": 1373,
+    "test": 1402
+  },
+  "counts_all": {
+    "train": 7392,
+    "val": 1590,
+    "test": 1587
+  },
+  "patches_per_s_by_workers": {
+    "0": 275.5,
+    "4": 1126.4,
+    "6": 1527.1
+  },
+  "num_workers_chosen": 6,
+  "patches_per_s": 1527.1,
+  "databar_patches_checked": 2000,
+  "databar_violations": 0,
+  "gate": {
+    "no_databar_overlap": true,
+    "patches_per_s_ge_200": true,
+    "PASS": true
+  }
+}

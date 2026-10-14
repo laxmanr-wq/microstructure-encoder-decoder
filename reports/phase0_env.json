@@ -1,0 +1,69 @@
+{
+  "phase": 0,
+  "platform": "macOS-26.5-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "python": "3.13.9",
+  "torch": "2.14.0",
+  "mps_available": true,
+  "mps_built": true,
+  "cuda_available": false,
+  "device": "mps",
+  "memory_budget_gb": 4.0,
+  "seed": 1337,
+  "benchmarks": [
+    {
+      "batch": 8,
+      "it_s": 7.253,
+      "img_s": 58.03,
+      "peak_gb": 1.077,
+      "params": 1442533
+    },
+    {
+      "batch": 16,
+      "it_s": 3.887,
+      "img_s": 62.2,
+      "peak_gb": 1.062,
+      "params": 1442533
+    },
+    {
+      "batch": 32,
+      "it_s": 1.927,
+      "img_s": 61.67,
+      "peak_gb": 2.101,
+      "params": 1442533
+    }
+  ],
+  "probe_params": 1442533,
+  "largest_batch_under_4gb": 32,
+  "chosen_batch": 16,
+  "chosen_it_s": 3.887,
+  "chosen_img_s": 62.2,
+  "chosen_peak_gb": 1.062,
+  "n_images_external": 10569,
+  "n_images_ssd_cache": 10569,
+  "ssd_cache_path": "/Users/nareshramavath/ms_cache/dataset",
+  "io": [
+    {
+      "source": "ssd_cache",
+      "n_images": 120,
+      "seconds": 0.623,
+      "img_s": 192.77,
+      "mpix_s": 202.13
+    },
+    {
+      "source": "external",
+      "n_images": 120,
+      "seconds": 2.243,
+      "img_s": 53.49,
+      "mpix_s": 56.09
+    }
+  ],
+  "cache_speedup": 3.6,
+  "gate": {
+    "mps_available": true,
+    "batch_under_4gb": true,
+    "ssd_faster_than_external": true,
+    "image_count_10569": true,
+    "PASS": true
+  }
+}

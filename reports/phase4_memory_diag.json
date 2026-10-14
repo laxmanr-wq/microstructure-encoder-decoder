@@ -1,0 +1,35 @@
+{
+  "phase": 4,
+  "purpose": "batch size under real memory pressure (real loader, full loss, MPS)",
+  "phase0_chosen_batch": 16,
+  "system": {
+    "swap_used_mb": 15358,
+    "swap_total_mb": 18432,
+    "memory_free_pct": 29
+  },
+  "bs16": {
+    "it_s": 0.008,
+    "steps": 2,
+    "swap_mb": [
+      16010,
+      18782
+    ],
+    "pageouts": 5199,
+    "verdict": "thrashing"
+  },
+  "bs8": {
+    "it_s": 1.156,
+    "img_s": 9.2,
+    "steps": 80,
+    "peak_gb": 2.2,
+    "swap_mb": [
+      17887,
+      18804
+    ],
+    "pageouts": 1765,
+    "verdict": "stable"
+  },
+  "decision": "batch 8",
+  "rule": "BRIEF: peak memory budget exceeded -> cut batch size, never model correctness",
+  "also": "val loader num_workers 2 -> 0: each spawned worker re-imports torch (~400 MB)"
+}

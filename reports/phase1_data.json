@@ -1,0 +1,69 @@
+{
+  "phase": 1,
+  "data_root": "/Users/nareshramavath/ms_cache/dataset",
+  "n_images": 10569,
+  "errors": 0,
+  "clusters": 9172,
+  "redundant": 1397,
+  "md5_dup_groups": 496,
+  "dhash_exact_groups": 579,
+  "hamming_merges": 83,
+  "hamming_threshold": 10,
+  "basename_families": 9615,
+  "basename_merges": 685,
+  "bars_top": 994,
+  "bars_bottom": 4103,
+  "median_bar_px": 56.0,
+  "band_edges_px": [
+    12.19,
+    21.333,
+    34.133,
+    56.889
+  ],
+  "band_counts": {
+    "0": 1992,
+    "1": 2125,
+    "2": 2126,
+    "3": 1907,
+    "4": 2419
+  },
+  "split_counts": {
+    "train": 7392,
+    "val": 1590,
+    "test": 1587
+  },
+  "split_counts_keep": {
+    "train": 6387,
+    "val": 1373,
+    "test": 1402
+  },
+  "kept": 9162,
+  "reference_audit": {
+    "clusters": 9458,
+    "redundant": 1111,
+    "bottom_bars": 4356,
+    "top_bars": 684,
+    "band_edges": [
+      12.2,
+      21.3,
+      34.1,
+      56.9
+    ]
+  },
+  "deviation": {
+    "clusters": -286,
+    "redundant": 286,
+    "bottom_bars": -253,
+    "top_bars": 310
+  },
+  "leak_check": {
+    "md5": 0,
+    "dhash": 0,
+    "hamming": 0
+  },
+  "gate": {
+    "zero_cross_split_duplicates": true,
+    "PASS": true
+  },
+  "seconds": 71.7
+}
